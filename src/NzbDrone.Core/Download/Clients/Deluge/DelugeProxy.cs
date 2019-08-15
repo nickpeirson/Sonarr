@@ -54,18 +54,21 @@ namespace NzbDrone.Core.Download.Clients.Deluge
 
                 return response;
             }
-            catch (DownloadClientException ex)
+            catch (Exception ex)
             {
-                if (ex.Message.Contains("Unknown method"))
+                if (!(ex is DownloadClientException) && !(ex is DownloadClientAuthenticationException))
                 {
-                    // Deluge v2 beta replaced 'daemon.info' with 'daemon.get_version'.
-                    // It may return or become official, for now we just retry with the get_version api.
-                    var response = ProcessRequest<string>(settings, "daemon.get_version");
-
-                    return response;
+                    throw
                 }
+                if (!ex.Message.Contains("Unknown method"))
+                {
+                    throw
+                }
+                // Deluge v2 beta replaced 'daemon.info' with 'daemon.get_version'.
+                // It may return or become official, for now we just retry with the get_version api.
+                var response = ProcessRequest<string>(settings, "daemon.get_version");
 
-                throw;
+                return response;
             }
         }
 
